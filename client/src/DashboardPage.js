@@ -6,8 +6,13 @@ const DashboardPage = () => {
 
   const location = useLocation();
   const user = location.state?.user;
+  const res = location.state?.data;
   if (!user) {
     return <p>Loading...</p>;
+  }
+
+  if(!res){
+    return <p>No results found for search criteria. Try with different dates.</p>
   }
 
   const { name, startDate, endDate, budget, originCity } = user;
@@ -18,23 +23,23 @@ const DashboardPage = () => {
   const duration = (end - start) / (1000 * 60 * 60 * 24) + 1;
 
   // Hardcoded recommendations
-  const recommendations = [
-    {
-      title: "Recommendation 1",
-      imageUrl: "https://via.placeholder.com/150",
-      projectedBudget: 100,
-    },
-    {
-      title: "Recommendation 2",
-      imageUrl: "https://via.placeholder.com/150",
-      projectedBudget: 200,
-    },
-    {
-      title: "Recommendation 3",
-      imageUrl: "https://via.placeholder.com/150",
-      projectedBudget: 300,
-    },
-  ];
+  // const recommendations = [
+  //   {
+  //     title: "Recommendation 1",
+  //     imageUrl: "https://via.placeholder.com/150",
+  //     projectedBudget: 100,
+  //   },
+  //   {
+  //     title: "Recommendation 2",
+  //     imageUrl: "https://via.placeholder.com/150",
+  //     projectedBudget: 200,
+  //   },
+  //   {
+  //     title: "Recommendation 3",
+  //     imageUrl: "https://via.placeholder.com/150",
+  //     projectedBudget: 300,
+  //   },
+  // ];
 
   const style = {
     container: {
@@ -162,43 +167,32 @@ const DashboardPage = () => {
     <div style={style.infoContainer}>
         <div style={style.recommendations}>
           <div style={style.tripDetailsBox}>
-            <h2 style={style.subtitle}>Recommendations</h2>
-            <table style={style.recommendationsTable}>
-              <thead>
-                <tr>
-                  <th style={style.tableHeader}>Image</th>
-                  <th style={style.tableHeader}>Recommendation</th>
-                  <th style={style.tableHeader}>Projected Budget</th>
+          <h2 style={style.subtitle}>Recommendations</h2>
+          <table style={style.recommendationsTable}>
+            <thead>
+              <tr>
+                <th style={style.tableHeader}>Name: </th>
+                <th style={style.tableHeader}>Places of Interests: </th>
+                <th style={style.tableHeader}>Estimated Budget: </th>
+              </tr>
+            </thead>
+            <tbody>
+              {res.map((rec, index) => (
+                <tr key={index} style={style.tableRow}>
+                  <td style={style.tableCell}>
+                    {rec.name}
+                  </td>
+                  <td style={style.tableCell}>
+                    {rec.poi[0]}
+                  </td>
+                  <td style={style.tableCell}>
+                    {rec.budget}
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {recommendations.map((rec, index) => (
-                  <tr key={index} style={style.tableRow}>
-                    <td style={style.tableCell}>
-                      <img
-                        src={rec.imageUrl}
-                        alt={rec.title}
-                        style={style.image}
-                      />
-                    </td>
-                    <td style={style.tableCell}>
-                      <a
-                        style={style.recommendationTitle}
-                        onClick={() => {
-                          // Navigate to the next page, e.g., RecommendationDetails
-                        }}
-                      >
-                        {rec.title}
-                      </a>
-                    </td>
-                    <td style={style.tableCell}>
-                      <p style={style.projectedBudget}>${rec.projectedBudget}</p>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </table>
+      </div>
         </div>
       <div style={style.tripDetailsBox}>
         <h2 style={style.subtitle}>Your Trip Details</h2>

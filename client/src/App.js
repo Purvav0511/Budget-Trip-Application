@@ -1,8 +1,13 @@
 import { Route, BrowserRouter as Router, Routes, useLocation } from "react-router-dom";
+import axios from "axios"
+import {format} from "date-fns"
+
 import "./App.css";
 import LoginPage from "./LoginPage";
 import PreferencesPage from "./PreferencesPage";
 import DashboardPage from "./DashboardPage";
+
+const baseUrl = "http://localhost:8000"
 
 function App() {
 
@@ -17,6 +22,7 @@ function App() {
   element={
     <DashboardPage
     user={useLocation.state?.user}
+    res={useLocation.state?.res}
     preferences={useLocation.state?.preferences}
     />
   }

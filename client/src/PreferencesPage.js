@@ -9,20 +9,44 @@ const PreferencesPage = (props) => {
   const navigate = useNavigate();
   const location = useLocation();
   const name = location.state?.name;
+  const email = location.state?.email;
+  const [res, setRes] = useState([]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     const user = {
-    name,
-    originCity,
-    budget,
-    startDate,
-    endDate,
-  };
-  const preferences = {
-    // Add any additional preferences here
-  };
-  navigate("/dashboard", { state: { user, preferences } });
+      name,
+      email,
+      originCity,
+      budget,
+      startDate,
+      endDate,
+      location
+    };
+
+  console.log(user)
+  
+
+  fetch(`http://localhost:8000/preferences`, {
+                'method': 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(user)
+            })
+            .then(async response => {
+              if(response.ok){
+                const data = await response.json();
+                setRes(data)
+                return data;
+              }
+              else {
+                console.log(response.statusText);
+              }
+            })
+            .then((data) => navigate("/dashboard", { state: { user, data} }) )
+            .catch(error => console.log(error));
+
   };
 
   const style = {
