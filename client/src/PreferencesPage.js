@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import Select from 'react-select'
 import LoginPage from "./LoginPage";
 const PreferencesPage = (props) => {
   const [originCity, setOriginCity]= useState("");
@@ -11,9 +12,51 @@ const PreferencesPage = (props) => {
   const name = location.state?.name;
   const email = location.state?.email;
   const [res, setRes] = useState([]);
+  const [errors, setErrors] = useState({ startDate: "" , endDate: "" });
+
+  const validateStartDate = (sD) => {
+    const currentDate = new Date();
+    const start = new Date(sD);
+    if(start < currentDate){
+      return false;
+    }
+
+    return true;
+
+  }
+
+  const validateEndDate = (sD, eD) => {
+    const currentDate = new Date();
+    const start = new Date(sD);
+    const end = new Date(eD);
+
+    if (start < currentDate || end <= start) {
+      return false;
+    }
+
+    return true;
+  }
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    let startError = "";
+        let endError = "";
+
+        if (!validateStartDate(startDate)) {
+            startError = "Please enter a valid start date.";
+        }
+
+        if (!validateEndDate(endDate)) {
+            endError = "Please enter a valid end date.";
+        }
+
+        if (startError || endError) {
+            setErrors({ startDate: startError, endDate: endError });
+            return;
+        }
+
+
     const user = {
       name,
       email,
@@ -48,6 +91,16 @@ const PreferencesPage = (props) => {
             .catch(error => console.log(error));
 
   };
+
+  const options = [
+    { value: 'New York City', label: 'New York City' },
+    { value: 'Los Angeles', label: 'Los Angeles' },
+    { value: 'Las Vegas', label: 'Las Vegas' }
+  ]
+  
+  const MyComponent = () => (
+    <Select options={options} />
+  )
 
   const style = {
     container: {
@@ -112,14 +165,7 @@ const PreferencesPage = (props) => {
       <label htmlFor="originCity" style={style.label}>
           Enter Origin City:
         </label>
-        <input
-          id="originCity"
-          type="text"
-          value={originCity}
-          onChange={(e) => setOriginCity(e.target.value)}
-          style={style.input}
-          placeholder="Enter the origin city"
-        />
+        <Select options={options} defaultValue={options[0]} onChange={(e) => setOriginCity(e.value)}/>
         <br />
         <label htmlFor="budget" style={style.label}>
           Budget(In USD):
@@ -128,6 +174,7 @@ const PreferencesPage = (props) => {
           id="budget"
           type="number"
           value={budget}
+          required= 'true'
           onChange={(e) => setBudget(e.target.value)}
           style={style.input}
           min="0"
@@ -142,9 +189,11 @@ const PreferencesPage = (props) => {
           id="startDate"
           type="date"
           value={startDate}
+          required= 'true'
           onChange={(e) => setStartDate(e.target.value)}
           style={style.input}
         />
+        {errors.startDate && <div style={{color: 'red', position : "relative", padding : "2%", marginTop: "-10px", marginBottom: "10px"}}>{errors.startDate}</div>}
         <br />
         <label htmlFor="endDate" style={style.label}>
           End Date:
@@ -153,9 +202,11 @@ const PreferencesPage = (props) => {
           id="endDate"
           type="date"
           value={endDate}
+          required= 'true'
           onChange={(e) => setEndDate(e.target.value)}
           style={style.input}
         />
+        {errors.endDate && <div style={{color: 'red', position : "relative", padding : "2%", marginTop: "-10px", marginBottom: "10px"}}>{errors.endDate}</div>}
         <br />
         {/* Add more preference fields as needed */}
         <button type="submit" style={style.button}>
