@@ -189,10 +189,7 @@ class Preferences():
         self.origin_city = origin_city
 
 def findFlightPrices(src, dest, date):
-    amadeus = Client(
-        client_id='i0W9Moi6Ako6N8KtGTnhi0HstdcKg3OA',
-        client_secret='EzCaTriwjLBD5geZ'
-    )
+    amadeus = Client()
 
     result = []
     try:
