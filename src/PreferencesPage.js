@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import LoginPage from "./LoginPage";
 const PreferencesPage = (props) => {
-    const [budget, setBudget] = useState("");
+  const [originCity, setOriginCity]= useState("");
+  const [budget, setBudget] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const navigate = useNavigate();
@@ -13,6 +14,7 @@ const PreferencesPage = (props) => {
     e.preventDefault();
     const user = {
     name,
+    originCity,
     budget,
     startDate,
     endDate,
@@ -83,6 +85,18 @@ const PreferencesPage = (props) => {
     <div style={style.container}>
       <form onSubmit={handleSubmit} style={style.form}>
       <h1 style={style.title}>Hi, {name}! Tell us about your travel preferences</h1>
+      <label htmlFor="originCity" style={style.label}>
+          Enter Origin City:
+        </label>
+        <input
+          id="originCity"
+          type="text"
+          value={originCity}
+          onChange={(e) => setOriginCity(e.target.value)}
+          style={style.input}
+          placeholder="Enter the origin city"
+        />
+        <br />
         <label htmlFor="budget" style={style.label}>
           Budget(In USD):
         </label>
