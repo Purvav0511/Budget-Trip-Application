@@ -10,7 +10,7 @@ const DashboardPage = () => {
     return <p>Loading...</p>;
   }
 
-  const { name, startDate, endDate, budget } = user;
+  const { name, startDate, endDate, budget, originCity } = user;
 
   // Calculate the duration of the trip
   const start = new Date(startDate);
@@ -141,7 +141,7 @@ const DashboardPage = () => {
       backgroundColor: "rgba(255, 255, 255, 0.8)",
       padding: "30px",
       borderRadius: "10px",
-      width: "300px",
+      width: "600px", // Increase the width
       maxWidth: "100%",
       textAlign: "center",
     },
@@ -161,45 +161,48 @@ const DashboardPage = () => {
     <h1 style={style.title}>Hi, {name}!</h1>
     <div style={style.infoContainer}>
         <div style={style.recommendations}>
-          <h2 style={style.subtitle}>Recommendations</h2>
-          <table style={style.recommendationsTable}>
-            <thead>
-              <tr>
-                <th style={style.tableHeader}>Image</th>
-                <th style={style.tableHeader}>Recommendation</th>
-                <th style={style.tableHeader}>Projected Budget</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recommendations.map((rec, index) => (
-                <tr key={index} style={style.tableRow}>
-                  <td style={style.tableCell}>
-                    <img
-                      src={rec.imageUrl}
-                      alt={rec.title}
-                      style={style.image}
-                    />
-                  </td>
-                  <td style={style.tableCell}>
-                    <a
-                      style={style.recommendationTitle}
-                      onClick={() => {
-                        // Navigate to the next page, e.g., RecommendationDetails
-                      }}
-                    >
-                      {rec.title}
-                    </a>
-                  </td>
-                  <td style={style.tableCell}>
-                    <p style={style.projectedBudget}>${rec.projectedBudget}</p>
-                  </td>
+          <div style={style.tripDetailsBox}>
+            <h2 style={style.subtitle}>Recommendations</h2>
+            <table style={style.recommendationsTable}>
+              <thead>
+                <tr>
+                  <th style={style.tableHeader}>Image</th>
+                  <th style={style.tableHeader}>Recommendation</th>
+                  <th style={style.tableHeader}>Projected Budget</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-      </div>
+              </thead>
+              <tbody>
+                {recommendations.map((rec, index) => (
+                  <tr key={index} style={style.tableRow}>
+                    <td style={style.tableCell}>
+                      <img
+                        src={rec.imageUrl}
+                        alt={rec.title}
+                        style={style.image}
+                      />
+                    </td>
+                    <td style={style.tableCell}>
+                      <a
+                        style={style.recommendationTitle}
+                        onClick={() => {
+                          // Navigate to the next page, e.g., RecommendationDetails
+                        }}
+                      >
+                        {rec.title}
+                      </a>
+                    </td>
+                    <td style={style.tableCell}>
+                      <p style={style.projectedBudget}>${rec.projectedBudget}</p>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       <div style={style.tripDetailsBox}>
         <h2 style={style.subtitle}>Your Trip Details</h2>
+        <p>Origin City: {originCity}</p>
         <p>Budget: ${budget}</p>
         <p>Start Date: {startDate}</p>
         <p>End Date: {endDate}</p>
