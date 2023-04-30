@@ -49,7 +49,11 @@ const DashboardPage = () => {
     navigate("/preferences", { state: { user: user } });
   };
 
-  if(!res || res.length===0){
+  if(!res["past_search"]["city"] || res["past_search"]["city"].length===0){
+    res["past_search"]["city"] = res["cities"]
+  }
+
+  if(!res["cities"] || res["cities"].length===0){
     return (
       <div style={styles.container}>
         <p style={styles.noResultsText}>
@@ -333,7 +337,7 @@ const DashboardPage = () => {
           {res["cities"].map((rec, index) => (
             <Card key={index} style={style.card}>
               <Card.Body>
-                <Card.Title>{rec.name}</Card.Title>
+                <Card.Title style={{fontWeight: "bold", color: "blue"}}>{rec.name}</Card.Title>
                 <Card.Text>Places of Interests: {rec.poi[0]}</Card.Text>
                 <Card.Text>Estimated Budget: ${rec.budget}</Card.Text>
               </Card.Body>
@@ -343,16 +347,19 @@ const DashboardPage = () => {
       </div>
     </div>
     <div style={style.tripDetailsBoxSim}>
-    <h2 style={style.subtitle}>Past Searches</h2>
+    <h2 style={style.subtitle}>Past Recommendations</h2>
+
     <div style={style.similarSearches}>
-      {similarSearches.map((search, index) => (
-        <Card key={index} style={style.similarCard}>
-          <Card.Body>
-            <Card.Title>{search.title}</Card.Title>
-            <Card.Text>Projected Budget: ${search.projectedBudget}</Card.Text>
-          </Card.Body>
-        </Card>
-      ))}
+      {res["past_search"]["city"].map((search, index) => (
+        <div style={style.similarCard}>
+        {index<=2 && <Card key={index} >
+        <Card.Body>
+          <Card.Title style={{fontWeight: "bold", color: "purple"}}>{search.name}</Card.Title>
+          <Card.Text>Projected Budget: ${search.budget}</Card.Text>
+        </Card.Body>
+      </Card>}
+      </div>
+))}
     </div>
   </div>
     </div>

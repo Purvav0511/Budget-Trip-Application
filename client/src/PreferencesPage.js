@@ -19,7 +19,6 @@ const PreferencesPage = (props) => {
   const [options, setOptions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [calculatig, setCalculating] = useState(false)
-  const [pastSearch, setPastSearch] = useState([]);
 
   useEffect(() => {
     setLoading(true);
@@ -101,8 +100,7 @@ const PreferencesPage = (props) => {
               async response => {
               if(response.ok){
                 const data = await response.json();
-                setRes(data["cities"])
-                setPastSearch(data["past_search"])
+                setRes(data)
                 console.log(data["past_search"])
                 return data;
               }

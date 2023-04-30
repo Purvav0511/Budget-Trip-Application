@@ -219,10 +219,10 @@ def createTargetCities(city_list, curr_city, preference, num_days):
     end_date = preference.end_date
     result_cities = {}
     for city in city_list:
-        # price_to = findFlightPrices(curr_city.airport_code, city.airport_code, start_date)
-        price_to = 120
-        # price_from = findFlightPrices(city.airport_code, curr_city.airport_code, end_date)
-        price_from = 110
+        price_to = findFlightPrices(curr_city.airport_code, city.airport_code, start_date)
+        # price_to = 120
+        price_from = findFlightPrices(city.airport_code, curr_city.airport_code, end_date)
+        # price_from = 110
         avg_cost = Cities.query.filter_by(city_name=city.city_name)[0].average_cost
         if(price_to == 0 or price_from == 0):
             continue
