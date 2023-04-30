@@ -14,6 +14,7 @@ const PreferencesPage = (props) => {
   const location = useLocation();
   const name = location.state?.name;
   const email = location.state?.email;
+  const userdata = location.state?.data;
   const [res, setRes] = useState([]);
   const [errors, setErrors] = useState({ startDate: "" , endDate: "" });
   const [options, setOptions] = useState([]);
@@ -182,7 +183,38 @@ const PreferencesPage = (props) => {
   };
 
   return (
-    <div>{loading ? <div>Loading...</div> : !calculating ? (<div style={style.container}>
+    <div>
+    {userdata && userdata.name === 'Not Valid' ? (    <div style={{ 
+      backgroundColor: '#fff', 
+      border: '1px solid #ccc', 
+      borderRadius: '4px', 
+      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)', 
+      margin: '50px auto', 
+      maxWidth: '500px', 
+      padding: '30px', 
+      textAlign: 'center' 
+    }}>
+      <h1 style={{ fontSize: '28px', marginBottom: '20px', color: 'red' }}>Error</h1>
+      <p style={{ marginBottom: '20px', fontWeight: "bold" }}>Username and email do not match.</p>
+      <button 
+        style={{ 
+          backgroundColor: '#333', 
+          border: 'none', 
+          borderRadius: '4px', 
+          color: '#fff', 
+          cursor: 'pointer', 
+          fontSize: '16px', 
+          padding: '10px 20px', 
+          transition: 'background-color 0.2s ease-in-out' 
+        }} 
+        onClick={() => { window.location.href = '/' }}
+      >
+        Go back
+      </button>
+    </div>): (<div>{
+      loading ? <div>Loading...</div> :
+      !calculating ? (
+      <div style={style.container}>
       <form onSubmit={handleSubmit} style={style.form}>
       <h1 style={style.title}>Hi, {name}! Tell us about your travel preferences</h1>
       <label htmlFor="originCity" style={style.label}>
@@ -237,18 +269,21 @@ const PreferencesPage = (props) => {
         </button>
       </form>
     </div>) : (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-      <div style={{ fontSize: 'large', padding: '20px' }}>
-      <img src={gif} alt="loading gif" />
-        <p style={{ textAlign: 'center' }}>Calculating recommendations...</p>
-        <p style={{ textAlign: 'center' }}>Fun Fact: You are a broke college student.</p>
-        <p style={{ textAlign: 'center' }}>Feeling attacked?</p>
-        <p style={{ textAlign: 'center' }}>Sounds like a YOU PROBLEM</p>
-      </div>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+            <div style={{ fontSize: 'large', padding: '20px' }}>
+            <img src={gif} alt="loading gif" />
+              <p style={{ textAlign: 'center' }}>Calculating recommendations...</p>
+              <p style={{ textAlign: 'center' }}>Fun Fact: You are a broke college student.</p>
+              <p style={{ textAlign: 'center' }}>Feeling attacked?</p>
+              <p style={{ textAlign: 'center' }}>Sounds like a YOU PROBLEM</p>
+            </div>
+          </div>
+    )}
     </div>
-    )}</div>
+    ) }
+  
+    </div>)
     
-  );
 };
 
 export default PreferencesPage;

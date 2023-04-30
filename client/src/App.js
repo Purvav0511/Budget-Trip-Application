@@ -16,7 +16,13 @@ function App() {
       <Router>
         <Routes>
           <Route path="/" element={<LoginPage />} />
-          <Route path="/preferences" element={<PreferencesPage location={window.location} />} />
+          <Route 
+          path="/preferences" 
+          element={
+          <PreferencesPage 
+          location={window.location} 
+          user={useLocation.state?.user}
+          />} />
           <Route
   path="/dashboard"
   element={

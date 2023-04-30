@@ -4,6 +4,7 @@ import { useNavigate, Link } from "react-router-dom";
 const LoginPage = () => {
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
+    const [userdata, setUserData] = useState({});
     const [errors, setErrors] = useState({ name: "", email: "" });
     const navigate = useNavigate();
 
@@ -41,18 +42,31 @@ const LoginPage = () => {
             email
         };
 
-        return fetch(`http://localhost:8000/login`, {
+        fetch(`http://localhost:8000/login`, {
                 'method': 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(user)
             })
-            .then(response => response.json())
-            .then(navigate("/preferences", { state: { name, email } }))
-            .catch(error => console.log(error))
+            .then(async response => {
+              if(response.ok){
+                const data = await response.json();
+                console.log("In response: " , data)
+                setUserData(data)
+                return data;
+                console.log("In response 2", userdata)
+              }
+              else {
+                console.log(response.statusText);
+              }
+            })
+            .then((data) => {
+                console.log(data);
+            navigate("/preferences", { state: { name, email, data} }) })
+            .catch(error => console.log(error));
 
-    };
+  };
 
     const handleChange = (e) => {
         setName(e.target.value);
