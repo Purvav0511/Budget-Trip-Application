@@ -14,7 +14,7 @@ from json.encoder import INFINITY
 import random
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:Stailness%402311@localhost/cheapThrills'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:Tiy2113@localhost/cheapThrills'
 
 db = SQLAlchemy(app)
 CORS(app)
@@ -28,10 +28,10 @@ app.app_context().push()
 class Cities(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=False)
     city_name = db.Column(db.String(), nullable=False)
-    city_latitude = db.Column(db.Double)
-    city_longitude = db.Column(db.Double)
+    city_latitude = db.Column(db.Float)
+    city_longitude = db.Column(db.Float)
     airport_code = db.Column(db.String())
-    average_cost = db.Column(db.Double, nullable=False)
+    average_cost = db.Column(db.Float, nullable=False)
 
     def __repr__(self):
         return f"City: \t Name: {self.city_name} \t Code: {self.airport_code} \t Latitude: {self.city_latitude}"
@@ -353,6 +353,16 @@ def get_preferences():
 
     return calculateTrip(preference)
 
+
+@app.route('/get-cities', methods = ['GET'])
+def get_cities():
+    cities = Cities.query.all()
+    city_list = []
+    for city in cities:
+        city_list.append({'label': city.city_name, 'value': city.city_name})
+
+    print(city_list)
+    return city_list
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000, debug=True)
