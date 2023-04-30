@@ -1,7 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Card } from "react-bootstrap"; // Add this line
 import PreferencesPage from "./PreferencesPage";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faMapMarkerAlt } from "@fortawesome/free-solid-svg-icons";
 
 const DashboardPage = () => {
 
@@ -9,9 +11,108 @@ const DashboardPage = () => {
   const navigate = useNavigate();
   const user = location.state?.user;
   const res = location.state?.data;
+  const [expandedCardIndex, setExpandedCardIndex] = useState(-1);
+  const [expandedCard, setExpandedCard] = useState(null);
   if (!user) {
     return <p>Loading...</p>;
   }
+
+  const handleCardClick = (rec) => {
+    setExpandedCard(rec);
+  };
+
+  const closeExpandedCard = () => {
+    setExpandedCard(null);
+  };
+
+  const ExpandedCard = ({ rec, onClose }) => {
+    const expandedCardStyle = {
+      position: "fixed",
+      zIndex: 2,
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: "rgba(255, 255, 255, 0.95)",
+      display: "flex",
+      flexDirection: "column",
+      justifyContent: "center",
+      alignItems: "center",
+      overflowY: "auto",
+      padding: "20px",
+      boxSizing: "border-box",
+    };
+  
+    const closeButtonStyle = {
+      position: "absolute",
+      top: "10px",
+      right: "10px",
+      border: "none",
+      borderRadius: "50%",
+      backgroundColor: "#f44336",
+      color: "white",
+      fontSize: "18px",
+      width: "30px",
+      height: "30px",
+      lineHeight: "30px",
+      textAlign: "center",
+      cursor: "pointer",
+    };
+  
+    const titleStyle = {
+      margin: "20px 0",
+      fontSize: "24px",
+      fontWeight: "bold",
+    };
+  
+    const subTitleStyle = {
+      fontSize: "18px",
+      fontWeight: "500",
+      color: "purple",
+    };
+  
+    const poiListStyle = {
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+      gap: "10px",
+      fontSize: "16px",
+      fontWeight: "400",
+      lineHeight: "24px",
+    };
+  
+    const poiItemStyle = {
+      backgroundColor: "#f5f5f5",
+      borderRadius: "5px",
+      padding: "10px",
+    };
+  
+    const iconStyle = {
+      marginRight: "5px",
+      color: "#673ab7",
+    };
+  
+    return (
+      <div style={expandedCardStyle}>
+        <button style={closeButtonStyle} onClick={onClose}>
+          &times;
+        </button>
+        <h2 style={titleStyle}>{rec.name}</h2>
+        <p style={subTitleStyle}>Estimated Budget: ${rec.budget}</p>
+        <p style={subTitleStyle}>Places of Interest:</p>
+        <div style={poiListStyle}>
+          {rec.poi.map((value, id) => {
+            return (
+              <div key={id} style={poiItemStyle}>
+                <FontAwesomeIcon icon={faMapMarkerAlt} style={iconStyle} />
+                {value}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+  
 
   const styles={
     noResultsButton: {
@@ -335,10 +436,13 @@ const DashboardPage = () => {
         <h2 style={style.subtitle}>Recommendations</h2>
         <div style={style.recommendations}>
           {res["cities"].map((rec, index) => (
-            <Card key={index} style={style.card}>
+          <Card
+            key={index}
+            style={style.card}
+            onClick={() => handleCardClick(rec)} // Pass rec data to the function
+          >
               <Card.Body>
-                <Card.Title style={{fontWeight: "bold", color: "blue"}}>{rec.name}</Card.Title>
-                <Card.Text>Places of Interests: {rec.poi[0]}</Card.Text>
+              <Card.Title style={{ fontWeight: "bold" }}>{rec.name}</Card.Title>
                 <Card.Text>Estimated Budget: ${rec.budget}</Card.Text>
               </Card.Body>
             </Card>
@@ -347,8 +451,7 @@ const DashboardPage = () => {
       </div>
     </div>
     <div style={style.tripDetailsBoxSim}>
-    <h2 style={style.subtitle}>Past Recommendations</h2>
-
+    <h2 style={style.subtitle}>Past Searches</h2>
     <div style={style.similarSearches}>
       {res["past_search"]["city"].map((search, index) => (
         <div style={style.similarCard}>
@@ -363,6 +466,9 @@ const DashboardPage = () => {
     </div>
   </div>
     </div>
+        {expandedCard && (
+        <ExpandedCard rec={expandedCard} onClose={closeExpandedCard} />
+      )}
   </div>
 );
 };
