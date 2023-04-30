@@ -6,6 +6,8 @@ import pyspark
 from pyspark.sql import SparkSession
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy import inspect
+
 import math
 from decimal import Decimal
 from amadeus import Client, ResponseError
@@ -71,33 +73,10 @@ class Place_of_Interest(db.Model):
         self.city_id = city_id
         self.place_name = place_name
 
-
-class Event(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    description = db.Column(db.String(100), nullable=False)
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-
-    def __repr__(self):
-        return f"Event: {self.description}"
-    
-    def __init__(self, description):
-        self.description = description
-
-def format_event(event):
-    return {
-        "description": event.description,
-        "id": event.id,
-        "created_at": event.created_at
-
-    }
-
 class Person(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(200), nullable=False)
-    email = db.Column(db.String(300), nullable=False)
-    first_pref = db.Column(db.String(200), nullable=True)
-    second_pref = db.Column(db.String(200), nullable=True)
-    third_pref = db.Column(db.String(200), nullable=True)
+    email = db.Column(db.String(300), nullable=False, primary_key=True)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
     def __repr__(self):
@@ -173,12 +152,6 @@ def get_square_bounds(lat, lon, distance):
 
     return (max_lat, min_lat, max_lon, min_lon)
 
-def haversine_distance(lat1, lon1, lat2, lon2):
-    p = math.pi / 180
-    a = 0.5 - math.cos((float(lat2) - float(lat1)) * p) / 2 + math.cos(float(lat1) * p) * math.cos(float(lat2) * p) * (1 - math.cos((float(lon2) - float(lon1)) * p)) / 2
-    return 12742 * math.asin(math.sqrt(a))
-
-
 class Preferences():
     def __init__(self, name, email, budget, start_date, end_date, origin_city):
         self.name = name
@@ -193,9 +166,6 @@ def findFlightPrices(src, dest, date):
 
     result = []
     try:
-        '''
-        Find the cheapest flights from NYC to BUF
-        '''
         response = amadeus.shopping.flight_offers_search.get(
             originLocationCode=src, destinationLocationCode=dest, departureDate=date, adults=1)
         result = response.data
@@ -233,25 +203,12 @@ def calculateTrip(preference):
     max_lat, min_lat, max_long, min_long = get_square_bounds(latitude, longitude, max_distance)
     print(max_lat, min_lat, max_long, min_long)
     cities = Cities.query.filter(Cities.city_latitude<=max_lat).filter(Cities.city_latitude>=min_lat).filter(Cities.city_longitude<=max_long).filter(Cities.city_longitude>=min_long).all()
-    # for city in cities:
-    #     new_lat = float(city.city_latitude)
-    #     new_lon = float(city.city_longitude)
-    #     dist = haversine_distance(latitude, longitude, new_lat, new_lon)
-    #     if(dist<max_distance):
-    #         city_list.append(city)
 
     if len(cities) < 10:
         city_list = cities
     else:
         city_list = random.sample(cities, 10)
-
-    # city_list = cities[0:10]
     print("City_List: \n ",city_list)
-    # poi_list = {}
-    # for city in city_list:
-    #     poi = Place_of_Interest.query.filter_by(city_id = city.id).all()
-    #     poi_list[city] = poi
-    # sorted_city_list = sorted(poi_list.items(), key=lambda x: x[1])
     result_cities = {}
     for city in city_list:
         price_to = findFlightPrices(curr_city.airport_code, city.airport_code, start_date)
@@ -261,7 +218,6 @@ def calculateTrip(preference):
         avg_cost = Cities.query.filter_by(city_name=city.city_name)[0].average_cost
         if(price_to == 0 or price_from == 0):
             continue
-
         total_price = float(price_to) + float(price_from) + float(avg_cost)*float(num_days)
         actual_budget = float(preference.budget)
         if(total_price <= actual_budget):
@@ -288,58 +244,30 @@ def calculateTrip(preference):
     return json.dumps(city_poi_list)
     # return json.dumps(result_cities)
 
-
-@app.route('/event', methods = ['POST'])
-def create_event():
-    description = request.json['description']
-    event = Event(description)
-    db.session.add(event)
-    db.session.commit()
-    return format_event(event)
-
-@app.route('/events', methods = ['GET'])
-def get_events():
-    events = Event.query.order_by(Event.id.asc()).all()
-    event_list = []
-    for event in events:
-        event_list.append(format_event(event))
-    return {
-        'events': event_list
-    }
-
-@app.route('/events/<id>', methods = ['GET'])
-def get_event(id):
-    event = Event.query.filter_by(id=id).one()
-    formatted_event = format_event(event)
-    return {
-        'event': formatted_event
-    }
-
-@app.route('/events/<id>', methods = ['DELETE'])
-def delete_event(id):
-    event = Event.query.filter_by(id=id).one()
-    db.session.delete(event)
-    db.session.commit()
-    return 'Event Deleted!'
-
-@app.route('/events/<id>', methods = ['PUT'])
-def update_event(id):
-    event = Event.query.filter_by(id=id)
-    description = request.json['description']
-    event.update(dict(description = description, created_at = datetime.utcnow()))
-    db.session.commit()
-    return {
-        'event': format_event(event.one())
-    }
-
 @app.route('/login', methods = ['POST'])
 def create_user():
     name = request.json['name']
     email = request.json['email']
     person = Person(name, email)
-    db.session.add(person)
-    db.session.commit()
-    return format_user(person)
+    person_exists = None
+    inspector = inspect(db.engine)
+    table_name = 'person'
+    if inspector.has_table(table_name):
+        person_exists = db.session.query(Person).filter(Person.email == email).first()
+        print("person = ", person_exists)
+        print('Table Exists')
+        if person_exists:
+            if person_exists.name == name:
+                print('Returning valid user')
+                return format_user(person)
+
+    if not person_exists:
+        print('In not person exists')
+        db.session.add(person)
+        db.session.commit()
+        return format_user(person)
+    print('Returning null value')
+    return ({'name': 'Not Valid'})
 
 @app.route('/preferences', methods = ['POST'])
 def get_preferences():
