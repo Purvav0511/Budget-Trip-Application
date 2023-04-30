@@ -147,7 +147,7 @@ const DashboardPage = () => {
     },
   }
   const handleNoResultsButtonClick = () => {
-    navigate("/preferences", { state: { user: user } });
+    navigate("/preferences", { state: { name: user.name, email: user.email} });
   };
 
   if(!res["past_search"]["city"] || res["past_search"]["city"].length===0){
@@ -413,7 +413,7 @@ const DashboardPage = () => {
   };
 
   const handleEditButtonClick = () => {
-    navigate("/preferences", { state: { user: user } });
+    navigate("/preferences", { state: { name: user["name"], email: user["email"]} });
   };
 
   return (

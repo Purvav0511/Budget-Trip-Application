@@ -372,7 +372,7 @@ def create_user():
     db.session.commit()
     return format_user(person)
 
-@app.route('/preferences', methods = ['POST'])
+@app.route('/send_preferences', methods = ['POST'])
 def get_preferences():
     name = request.json['name']
     email = request.json['email']

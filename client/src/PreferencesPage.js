@@ -18,7 +18,7 @@ const PreferencesPage = (props) => {
   const [errors, setErrors] = useState({ startDate: "" , endDate: "" });
   const [options, setOptions] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [calculatig, setCalculating] = useState(false)
+  const [calculating, setCalculating] = useState(false)
 
   useEffect(() => {
     setLoading(true);
@@ -89,7 +89,7 @@ const PreferencesPage = (props) => {
   // console.log(user)
   
   setCalculating(true)
-  fetch(`http://localhost:8000/preferences`, {
+  fetch(`http://localhost:8000/send_preferences`, {
                 'method': 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -182,7 +182,7 @@ const PreferencesPage = (props) => {
   };
 
   return (
-    <div>{loading ? <div>Loading...</div> : !calculatig ? (<div style={style.container}>
+    <div>{loading ? <div>Loading...</div> : !calculating ? (<div style={style.container}>
       <form onSubmit={handleSubmit} style={style.form}>
       <h1 style={style.title}>Hi, {name}! Tell us about your travel preferences</h1>
       <label htmlFor="originCity" style={style.label}>
@@ -216,7 +216,7 @@ const PreferencesPage = (props) => {
           onChange={(e) => setStartDate(e.target.value)}
           style={style.input}
         />
-        {errors.startDate && !calculatig && <div style={{color: 'red', position : "relative", padding : "2%", marginTop: "-10px", marginBottom: "10px"}}>{errors.startDate}</div>}
+        {errors.startDate && !calculating && <div style={{color: 'red', position : "relative", padding : "2%", marginTop: "-10px", marginBottom: "10px"}}>{errors.startDate}</div>}
         <br />
         <label htmlFor="endDate" style={style.label}>
           End Date:
@@ -229,7 +229,7 @@ const PreferencesPage = (props) => {
           onChange={(e) => setEndDate(e.target.value)}
           style={style.input}
         />
-        {errors.endDate && !calculatig && <div style={{color: 'red', position : "relative", padding : "2%", marginTop: "-10px", marginBottom: "10px"}}>{errors.endDate}</div>}
+        {errors.endDate && !calculating && <div style={{color: 'red', position : "relative", padding : "2%", marginTop: "-10px", marginBottom: "10px"}}>{errors.endDate}</div>}
         <br />
         {/* Add more preference fields as needed */}
         <button type="submit" style={style.button}>
