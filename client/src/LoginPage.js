@@ -158,23 +158,7 @@ const LoginPage = () => {
         Step 1 / 4
         </button>
         </form>
-        </div><input
-        id = "name"
-        type = "text"
-        value = { name }
-        onChange = { handleChange }
-        style = { style.input } />
-        <label htmlFor="email" style={style.label}>
-        Email:
-        </label><input
-        id = "email"
-        type = "email"
-        value = { email }
-        onChange = {
-            (e) => setEmail(e.target.value) }
-        style = { style.input }
-        /><button type="submit" style={style.button}>
-        Step 1 / 4 </button>
+        </div>
         </ >
         
     );
