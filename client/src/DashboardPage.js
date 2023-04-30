@@ -177,7 +177,7 @@ const DashboardPage = () => {
               </tr>
             </thead>
             <tbody>
-              {res.map((rec, index) => (
+              {res["cities"].map((rec, index) => (
                 <tr key={index} style={style.tableRow}>
                   <td style={style.tableCell}>
                     {rec.name}

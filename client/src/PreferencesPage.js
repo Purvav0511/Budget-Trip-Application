@@ -11,6 +11,7 @@ const PreferencesPage = (props) => {
   const name = location.state?.name;
   const email = location.state?.email;
   const [res, setRes] = useState([]);
+  const [pastSearch, setPastSearch] = useState([]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -24,7 +25,7 @@ const PreferencesPage = (props) => {
       location
     };
 
-  console.log(user)
+  // console.log(user)
   
 
   fetch(`http://localhost:8000/preferences`, {
@@ -37,7 +38,9 @@ const PreferencesPage = (props) => {
             .then(async response => {
               if(response.ok){
                 const data = await response.json();
-                setRes(data)
+                setRes(data["cities"])
+                setPastSearch(data["past_search"])
+                console.log(data["past_search"])
                 return data;
               }
               else {
