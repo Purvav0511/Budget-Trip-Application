@@ -4,10 +4,38 @@ import { useNavigate, Link } from "react-router-dom";
 const LoginPage = () => {
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
+    const [errors, setErrors] = useState({ name: "", email: "" });
     const navigate = useNavigate();
+
+    const validateName = (name) => {
+        const nameRegex = /^[a-zA-Z]+(([',. -][a-zA-Z ])?[a-zA-Z]*)*$/;
+        return nameRegex.test(name);
+    };
+
+    const validateEmail = (email) => {
+        const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
+        return emailRegex.test(email);
+    };
 
     const handleSubmit = (e) => {
         e.preventDefault();
+
+        // Validate name and email
+        let nameError = "";
+        let emailError = "";
+
+        if (!validateName(name)) {
+            nameError = "Please enter a valid name.";
+        }
+
+        if (!validateEmail(email)) {
+            emailError = "Please enter a valid email address.";
+        }
+
+        if (nameError || emailError) {
+            setErrors({ name: nameError, email: emailError });
+            return;
+        }
         const user = {
             name,
             email
@@ -109,8 +137,10 @@ const LoginPage = () => {
         <input id = "name"
         type = "text"
         value = { name }
+        required = 'true'
         onChange = { handleChange }
         style = { style.input } />
+        {errors.name && <div style={{color: 'red', position : "relative", padding : "2%", marginTop: "-10px", marginBottom: "10px"}}>{errors.name}</div>}
         <label htmlFor = "email"
         style = { style.label } >
         Email:
@@ -118,31 +148,17 @@ const LoginPage = () => {
         <input id = "email"
         type = "email"
         value = { email }
+        required = 'true'
         onChange = {
             (e) => setEmail(e.target.value) }
         style = { style.input }/> 
+        {errors.email && <div style={{color: 'red', position : "relative", padding : "2%", marginTop: "-10px"}}>{errors.email}</div>}
         <button type = "submit"
         style = { style.button } >
         Step 1 / 4
         </button>
         </form>
-        </div><input
-        id = "name"
-        type = "text"
-        value = { name }
-        onChange = { handleChange }
-        style = { style.input } />
-        <label htmlFor="email" style={style.label}>
-        Email:
-        </label><input
-        id = "email"
-        type = "email"
-        value = { email }
-        onChange = {
-            (e) => setEmail(e.target.value) }
-        style = { style.input }
-        /><button type="submit" style={style.button}>
-        Step 1 / 4 </button>
+        </div>
         </ >
         
     );

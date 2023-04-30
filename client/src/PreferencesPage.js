@@ -1,6 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import Select from 'react-select'
 import LoginPage from "./LoginPage";
+import gif from './assets/giphy.gif';
+
+
 const PreferencesPage = (props) => {
   const [originCity, setOriginCity]= useState("");
   const [budget, setBudget] = useState("");
@@ -11,10 +15,68 @@ const PreferencesPage = (props) => {
   const name = location.state?.name;
   const email = location.state?.email;
   const [res, setRes] = useState([]);
+  const [errors, setErrors] = useState({ startDate: "" , endDate: "" });
+  const [options, setOptions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [calculatig, setCalculating] = useState(false)
   const [pastSearch, setPastSearch] = useState([]);
+
+  useEffect(() => {
+    setLoading(true);
+    async function getCities() {
+    const result = await fetch(`http://localhost:8000/get-cities`, {'method': 'GET'})
+    const result_json = await result.json()
+    console.log(result_json)
+    setOptions(result_json)
+    setLoading(false);
+    }
+    getCities();
+  }, [])
+  
+
+  const validateStartDate = (sD) => {
+    const currentDate = new Date();
+    const start = new Date(sD);
+    if(start < currentDate){
+      return false;
+    }
+
+    return true;
+
+  }
+
+  const validateEndDate = (sD, eD) => {
+    const currentDate = new Date();
+    const start = new Date(sD);
+    const end = new Date(eD);
+
+    if (start < currentDate || end <= start) {
+      return false;
+    }
+
+    return true;
+  }
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    let startError = "";
+        let endError = "";
+
+        if (!validateStartDate(startDate)) {
+            startError = "Please enter a valid start date.";
+        }
+
+        if (!validateEndDate(endDate)) {
+            endError = "Please enter a valid end date.";
+        }
+
+        if (startError || endError) {
+            setErrors({ startDate: startError, endDate: endError });
+            return;
+        }
+
+
     const user = {
       name,
       email,
@@ -27,7 +89,7 @@ const PreferencesPage = (props) => {
 
   // console.log(user)
   
-
+  setCalculating(true)
   fetch(`http://localhost:8000/preferences`, {
                 'method': 'POST',
                 headers: {
@@ -35,7 +97,8 @@ const PreferencesPage = (props) => {
                 },
                 body: JSON.stringify(user)
             })
-            .then(async response => {
+            .then(
+              async response => {
               if(response.ok){
                 const data = await response.json();
                 setRes(data["cities"])
@@ -47,10 +110,22 @@ const PreferencesPage = (props) => {
                 console.log(response.statusText);
               }
             })
-            .then((data) => navigate("/dashboard", { state: { user, data} }) )
+            .then((data) => {
+              setCalculating(false)
+              navigate("/dashboard", { state: { user, data} }) })
             .catch(error => console.log(error));
 
   };
+
+  // const options = [
+  //   { value: 'New York City', label: 'New York City' },
+  //   { value: 'Los Angeles', label: 'Los Angeles' },
+  //   { value: 'Las Vegas', label: 'Las Vegas' }
+  // ]
+  
+  const MyComponent = () => (
+    <Select options={options} />
+  )
 
   const style = {
     container: {
@@ -109,20 +184,13 @@ const PreferencesPage = (props) => {
   };
 
   return (
-    <div style={style.container}>
+    <div>{loading ? <div>Loading...</div> : !calculatig ? (<div style={style.container}>
       <form onSubmit={handleSubmit} style={style.form}>
       <h1 style={style.title}>Hi, {name}! Tell us about your travel preferences</h1>
       <label htmlFor="originCity" style={style.label}>
           Enter Origin City:
         </label>
-        <input
-          id="originCity"
-          type="text"
-          value={originCity}
-          onChange={(e) => setOriginCity(e.target.value)}
-          style={style.input}
-          placeholder="Enter the origin city"
-        />
+        <Select options={options} defaultValue={options[0]} onChange={(e) => setOriginCity(e.value)}/>
         <br />
         <label htmlFor="budget" style={style.label}>
           Budget(In USD):
@@ -131,6 +199,7 @@ const PreferencesPage = (props) => {
           id="budget"
           type="number"
           value={budget}
+          required= 'true'
           onChange={(e) => setBudget(e.target.value)}
           style={style.input}
           min="0"
@@ -145,9 +214,11 @@ const PreferencesPage = (props) => {
           id="startDate"
           type="date"
           value={startDate}
+          required= 'true'
           onChange={(e) => setStartDate(e.target.value)}
           style={style.input}
         />
+        {errors.startDate && !calculatig && <div style={{color: 'red', position : "relative", padding : "2%", marginTop: "-10px", marginBottom: "10px"}}>{errors.startDate}</div>}
         <br />
         <label htmlFor="endDate" style={style.label}>
           End Date:
@@ -156,16 +227,26 @@ const PreferencesPage = (props) => {
           id="endDate"
           type="date"
           value={endDate}
+          required= 'true'
           onChange={(e) => setEndDate(e.target.value)}
           style={style.input}
         />
+        {errors.endDate && !calculatig && <div style={{color: 'red', position : "relative", padding : "2%", marginTop: "-10px", marginBottom: "10px"}}>{errors.endDate}</div>}
         <br />
         {/* Add more preference fields as needed */}
         <button type="submit" style={style.button}>
           Step 2/4
         </button>
       </form>
+    </div>) : (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+      <div style={{ fontSize: 'large', padding: '20px' }}>
+      <img src={gif} alt="loading gif" />
+        <p style={{ textAlign: 'center' }}>Calculating recommendations...</p>
+      </div>
     </div>
+    )}</div>
+    
   );
 };
 
