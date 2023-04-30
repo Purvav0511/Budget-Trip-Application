@@ -12,6 +12,9 @@ flask-cors = "*"
 spark = "*"
 pyspark = "*"
 amadeus = "*"
+pymongo = "*"
+flask-pymongo = "*"
+flask-wtf = "*"
 
 [dev-packages]
 

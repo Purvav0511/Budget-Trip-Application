@@ -330,7 +330,7 @@ const DashboardPage = () => {
       <div style={style.tripDetailsBoxRec}>
         <h2 style={style.subtitle}>Recommendations</h2>
         <div style={style.recommendations}>
-          {res.map((rec, index) => (
+          {res["cities"].map((rec, index) => (
             <Card key={index} style={style.card}>
               <Card.Body>
                 <Card.Title>{rec.name}</Card.Title>

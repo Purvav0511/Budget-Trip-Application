@@ -1,3 +1,4 @@
+from hashlib import new
 from flask import Flask, request
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, date
@@ -12,12 +13,21 @@ from amadeus import Client, ResponseError
 import json
 from json.encoder import INFINITY
 import random
+from flask_pymongo import PyMongo
+from pymongo import MongoClient
+from bson import json_util
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:Tiy2113@localhost/cheapThrills'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:sheenagarg9@localhost/cheapThrills'
+app.config['MONGO_URI'] = 'mongodb://localhost:27017/cheapThrills'
 
 db = SQLAlchemy(app)
+mongo = PyMongo(app)
+
 CORS(app)
+
+db_mongo = mongo.db['cheapThrills']
+recommendations = db_mongo['recommendations']
 
 def app_context():
     with app.app_context():
@@ -71,26 +81,6 @@ class Place_of_Interest(db.Model):
         self.city_id = city_id
         self.place_name = place_name
 
-
-class Event(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    description = db.Column(db.String(100), nullable=False)
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-
-    def __repr__(self):
-        return f"Event: {self.description}"
-    
-    def __init__(self, description):
-        self.description = description
-
-def format_event(event):
-    return {
-        "description": event.description,
-        "id": event.id,
-        "created_at": event.created_at
-
-    }
-
 class Person(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200), nullable=False)
@@ -110,9 +100,7 @@ class Person(db.Model):
 def format_user(person):
     return {
         "name": person.name,
-        "email": person.email,
-        "id": person.id,
-        "created_at": person.created_at
+        "email": person.email
 
     }
 
@@ -180,13 +168,19 @@ def haversine_distance(lat1, lon1, lat2, lon2):
 
 
 class Preferences():
-    def __init__(self, name, email, budget, start_date, end_date, origin_city):
-        self.name = name
-        self.email = email
+    def __init__(self, budget, start_date, end_date, origin_city):
         self.budget = budget
         self.start_date = start_date
         self.end_date = end_date
         self.origin_city = origin_city
+
+def format_preference(preference):
+    return {
+        "budget": preference.budget,
+        "originCity": preference.origin_city,
+        "startDate": preference.start_date,
+        "endDate": preference.end_date
+    }
 
 def findFlightPrices(src, dest, date):
     amadeus = Client()
@@ -213,51 +207,22 @@ def findFlightPrices(src, dest, date):
     except ResponseError as error:
         print(error)
     
-
-    
-def calculateTrip(preference):
-    location = preference.origin_city
-    curr_city = Cities.query.filter_by(city_name=location)[0]
-    print(curr_city)
-    origin_airport = curr_city.airport_code
-    latitude = float(curr_city.city_latitude)
-    longitude = float(curr_city.city_longitude)
+def calculateNumDays(preference):
     start_date = preference.start_date
     end_date = preference.end_date
     diff = date(int(end_date.split('-')[0]), int(end_date.split('-')[1]), int(end_date.split('-')[2])) -  date(int(start_date.split('-')[0]), int(start_date.split('-')[1]), int(start_date.split('-')[2]))
     num_days = diff.days
-    print(num_days)
-    max_distance = num_days * 700
-    # cities = Cities.query.order_by(Cities.id.asc()).all()
-    city_list = []
-    max_lat, min_lat, max_long, min_long = get_square_bounds(latitude, longitude, max_distance)
-    print(max_lat, min_lat, max_long, min_long)
-    cities = Cities.query.filter(Cities.city_latitude<=max_lat).filter(Cities.city_latitude>=min_lat).filter(Cities.city_longitude<=max_long).filter(Cities.city_longitude>=min_long).all()
-    # for city in cities:
-    #     new_lat = float(city.city_latitude)
-    #     new_lon = float(city.city_longitude)
-    #     dist = haversine_distance(latitude, longitude, new_lat, new_lon)
-    #     if(dist<max_distance):
-    #         city_list.append(city)
+    return num_days
 
-    if len(cities) < 10:
-        city_list = cities
-    else:
-        city_list = random.sample(cities, 10)
-
-    # city_list = cities[0:10]
-    print("City_List: \n ",city_list)
-    # poi_list = {}
-    # for city in city_list:
-    #     poi = Place_of_Interest.query.filter_by(city_id = city.id).all()
-    #     poi_list[city] = poi
-    # sorted_city_list = sorted(poi_list.items(), key=lambda x: x[1])
+def createTargetCities(city_list, curr_city, preference, num_days):
+    start_date = preference.start_date
+    end_date = preference.end_date
     result_cities = {}
     for city in city_list:
-        price_to = findFlightPrices(curr_city.airport_code, city.airport_code, start_date)
-        # price_to = 120
-        price_from = findFlightPrices(city.airport_code, curr_city.airport_code, end_date)
-        # price_from = 110
+        # price_to = findFlightPrices(curr_city.airport_code, city.airport_code, start_date)
+        price_to = 120
+        # price_from = findFlightPrices(city.airport_code, curr_city.airport_code, end_date)
+        price_from = 110
         avg_cost = Cities.query.filter_by(city_name=city.city_name)[0].average_cost
         if(price_to == 0 or price_from == 0):
             continue
@@ -266,7 +231,29 @@ def calculateTrip(preference):
         actual_budget = float(preference.budget)
         if(total_price <= actual_budget):
             result_cities[city] = total_price
+    return result_cities
+
+def createCityList(latitude, longitude, max_distance):
+    city_list = []
+    max_lat, min_lat, max_long, min_long = get_square_bounds(latitude, longitude, max_distance)
+    cities = Cities.query.filter(Cities.city_latitude<=max_lat).filter(Cities.city_latitude>=min_lat).filter(Cities.city_longitude<=max_long).filter(Cities.city_longitude>=min_long).all()
+
+    if len(cities) < 10:
+        city_list = cities
+    else:
+        city_list = random.sample(cities, 10)
+
+    return city_list
+
+def createCityRecommendation(city, budget):
+    poi_list = []
+    pois = Place_of_Interest.query.filter_by(city_id = city.id).all()
+    for poi in pois:
+        poi_list.append(poi.place_name)
+    return format_city(city, poi_list, budget)
+        
     
+def createRecommendations(result_cities, preference, user):
     sorted_city_list = sorted(result_cities.items(), key=lambda x: x[1])
     city_poi_list = []
     cnt=0
@@ -276,61 +263,76 @@ def calculateTrip(preference):
         cnt = cnt+1
         city = key
         budget = value
-        poi_list = []
-        pois = Place_of_Interest.query.filter_by(city_id = city.id).all()
-        for poi in pois:
-            poi_list.append(poi.place_name)
-        city_poi_list.append(format_city(city, poi_list, budget))
-        
 
-    print(json.dumps(city_poi_list))
+        curr_city_recommendation = createCityRecommendation(city, budget)
+        city_poi_list.append(curr_city_recommendation)
+    ts = datetime.now()
+    recommendations.insert_one({'user': format_user(user), 'preference': format_preference(preference), 'city': city_poi_list, 'timestamp': ts})
+    return city_poi_list
+
+def calculateTrip(user, preference):
+    location = preference.origin_city
+    curr_city = Cities.query.filter_by(city_name=location)[0]
+
+    origin_airport = curr_city.airport_code
+    latitude = float(curr_city.city_latitude)
+    longitude = float(curr_city.city_longitude)
+
+    num_days = calculateNumDays(preference)
+
+    max_distance = num_days * 700
+
+    city_list = createCityList(latitude, longitude, max_distance)
+
+    result_cities = createTargetCities(city_list, curr_city, preference, num_days)
+
+    city_poi_list = createRecommendations(result_cities, preference, user)
     
-    return json.dumps(city_poi_list)
-    # return json.dumps(result_cities)
+    return city_poi_list
 
 
-@app.route('/event', methods = ['POST'])
-def create_event():
-    description = request.json['description']
-    event = Event(description)
-    db.session.add(event)
-    db.session.commit()
-    return format_event(event)
+# @app.route('/event', methods = ['POST'])
+# def create_event():
+#     description = request.json['description']
+#     event = Event(description)
+#     db.session.add(event)
+#     db.session.commit()
+#     return format_event(event)
 
-@app.route('/events', methods = ['GET'])
-def get_events():
-    events = Event.query.order_by(Event.id.asc()).all()
-    event_list = []
-    for event in events:
-        event_list.append(format_event(event))
-    return {
-        'events': event_list
-    }
+# @app.route('/events', methods = ['GET'])
+# def get_events():
+#     events = Event.query.order_by(Event.id.asc()).all()
+#     event_list = []
+#     for event in events:
+#         event_list.append(format_event(event))
+#     return {
+#         'events': event_list
+#     }
 
-@app.route('/events/<id>', methods = ['GET'])
-def get_event(id):
-    event = Event.query.filter_by(id=id).one()
-    formatted_event = format_event(event)
-    return {
-        'event': formatted_event
-    }
+# @app.route('/events/<id>', methods = ['GET'])
+# def get_event(id):
+#     event = Event.query.filter_by(id=id).one()
+#     formatted_event = format_event(event)
+#     return {
+#         'event': formatted_event
+#     }
 
-@app.route('/events/<id>', methods = ['DELETE'])
-def delete_event(id):
-    event = Event.query.filter_by(id=id).one()
-    db.session.delete(event)
-    db.session.commit()
-    return 'Event Deleted!'
+# @app.route('/events/<id>', methods = ['DELETE'])
+# def delete_event(id):
+#     event = Event.query.filter_by(id=id).one()
+#     db.session.delete(event)
+#     db.session.commit()
+#     return 'Event Deleted!'
 
-@app.route('/events/<id>', methods = ['PUT'])
-def update_event(id):
-    event = Event.query.filter_by(id=id)
-    description = request.json['description']
-    event.update(dict(description = description, created_at = datetime.utcnow()))
-    db.session.commit()
-    return {
-        'event': format_event(event.one())
-    }
+# @app.route('/events/<id>', methods = ['PUT'])
+# def update_event(id):
+#     event = Event.query.filter_by(id=id)
+#     description = request.json['description']
+#     event.update(dict(description = description, created_at = datetime.utcnow()))
+#     db.session.commit()
+#     return {
+#         'event': format_event(event.one())
+#     }
 
 @app.route('/login', methods = ['POST'])
 def create_user():
@@ -349,10 +351,29 @@ def get_preferences():
     start_date = request.json['startDate']
     end_date = request.json['endDate']
     origin_city = request.json['originCity']
-    preference = Preferences(name, email, budget, start_date, end_date, origin_city)
 
-    return calculateTrip(preference)
+    user = Person(name, email)
 
+    preference = Preferences(budget, start_date, end_date, origin_city)
+    past_search = get_past_searches(name, email)
+    city_poi_list = calculateTrip(user, preference)
+    curr_and_past_search = {"cities": city_poi_list, "past_search":past_search}
+    return curr_and_past_search
+
+def get_past_searches(name, email):
+    city_objects = recommendations.find({'user':{'name': name, 'email': email}})
+    city_objects = list(city_objects)
+    print(len(city_objects))
+    if len(city_objects) == 0:
+        return {}
+    else:
+        past_search = json.loads(json_util.dumps(city_objects[0]))
+        max_time = city_objects[0]['timestamp']
+        for i in range(len(city_objects)):
+            if city_objects[i]['timestamp'] > max_time:
+                past_search = json.loads(json_util.dumps(city_objects[i]))
+        return past_search
+    
 
 @app.route('/get-cities', methods = ['GET'])
 def get_cities():

@@ -19,6 +19,7 @@ const PreferencesPage = (props) => {
   const [options, setOptions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [calculatig, setCalculating] = useState(false)
+  const [pastSearch, setPastSearch] = useState([]);
 
   useEffect(() => {
     setLoading(true);
@@ -86,7 +87,7 @@ const PreferencesPage = (props) => {
       location
     };
 
-  console.log(user)
+  // console.log(user)
   
   setCalculating(true)
   fetch(`http://localhost:8000/preferences`, {
@@ -100,7 +101,9 @@ const PreferencesPage = (props) => {
               async response => {
               if(response.ok){
                 const data = await response.json();
-                setRes(data)
+                setRes(data["cities"])
+                setPastSearch(data["past_search"])
+                console.log(data["past_search"])
                 return data;
               }
               else {
