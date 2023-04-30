@@ -5,7 +5,7 @@ from datetime import datetime, date
 from flask_cors import CORS
 import pyspark
 from pyspark.sql import SparkSession
-from sqlalchemy import create_engine
+from sqlalchemy import MetaData, create_engine
 from sqlalchemy.orm import sessionmaker
 import math
 from decimal import Decimal
@@ -16,6 +16,9 @@ import random
 from flask_pymongo import PyMongo
 from pymongo import MongoClient
 from bson import json_util
+
+# engine = create_engine("postgresql://postgres:sheenagarg9@localhost/")
+# e = engine.connect().execute('CREATE DATABASE trial')
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:sheenagarg9@localhost/cheapThrills'
@@ -28,6 +31,7 @@ CORS(app)
 
 db_mongo = mongo.db['cheapThrills']
 recommendations = db_mongo['recommendations']
+flights = db_mongo['flights']
 
 def app_context():
     with app.app_context():
@@ -101,6 +105,24 @@ def format_user(person):
     return {
         "name": person.name,
         "email": person.email
+
+    }
+
+class Flight():
+    def __init__(self, src, dest, price, date):
+        self.src = src
+        self.dest = dest
+        self.price = price
+        self.date = date
+        self.timestamp = datetime.now()
+
+def format_flight(flight):
+    return {
+        "source": flight.src,
+        "destination": flight.dest,
+        "price": flight.price,
+        "date": flight.date,
+        "timestamp": flight.timestamp
 
     }
 
@@ -214,6 +236,13 @@ def calculateNumDays(preference):
     num_days = diff.days
     return num_days
 
+def addFlightObjectToDatabase(src, dest, price_to, price_from, start_date, end_date):
+    flight_obj = Flight(src, dest, price_to, start_date)
+    flights.insert_one(format_flight(flight_obj))
+
+    flight_obj = Flight(dest, src, price_from, end_date)
+    flights.insert_one(format_flight(flight_obj))
+
 def createTargetCities(city_list, curr_city, preference, num_days):
     start_date = preference.start_date
     end_date = preference.end_date
@@ -226,7 +255,7 @@ def createTargetCities(city_list, curr_city, preference, num_days):
         avg_cost = Cities.query.filter_by(city_name=city.city_name)[0].average_cost
         if(price_to == 0 or price_from == 0):
             continue
-
+        addFlightObjectToDatabase(curr_city.city_name, city.city_name, price_to, price_from, start_date, end_date)
         total_price = float(price_to) + float(price_from) + float(avg_cost)*float(num_days)
         actual_budget = float(preference.budget)
         if(total_price <= actual_budget):
