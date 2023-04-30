@@ -11,7 +11,7 @@ const DashboardPage = () => {
     return <p>Loading...</p>;
   }
 
-  if(!res){
+  if(!res || res.length===0){
     return <p>No results found for search criteria. Try with different dates.</p>
   }
 
