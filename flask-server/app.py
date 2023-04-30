@@ -14,7 +14,7 @@ from json.encoder import INFINITY
 import random
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:sheenagarg9@localhost/cheapThrills'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:123@localhost:5432/cheapThrills'
 
 db = SQLAlchemy(app)
 CORS(app)
